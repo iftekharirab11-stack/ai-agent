@@ -29,13 +29,13 @@ from typing import Optional, List, Dict
 
 CONFIG = {
     "ollama_model": "stablelm2:1.6b",
-    "github_repo_url": "https://github.com/iftekharirab11-stack/ai-agent.git",  # GitHub repo URL
+    "github_repo_url": os.environ.get("GITHUB_REPO_URL", ""),  # GitHub repo URL from environment
     "github_branch": "main",
     "output_file": "index.html",
     "prompt_file": "prompt.txt",
     "report_file": "auto_report.txt",
     "commit_message_file": "commit_message.txt",
-    "github_pages_url": "",  # Will be auto-generated if repo URL is set
+    "github_pages_url": os.environ.get("GITHUB_PAGES_URL", ""),  # GitHub Pages URL from environment
 }
 
 # ============================================================================
@@ -257,8 +257,26 @@ def save_code_to_file(code: str, filename: str) -> bool:
 # GIT OPERATIONS
 # ============================================================================
 
+# Whitelist of allowed git commands for security
+ALLOWED_GIT_COMMANDS = {
+    "status", "init", "branch", "remote", "add", "commit", "push", "log", "diff"
+}
+
+
 def run_git_command(command: List[str], check: bool = True) -> subprocess.CompletedProcess:
-    """Run a git command and return the result."""
+    """
+    Run a git command with validation.
+    
+    Security: Validates command against whitelist to prevent injection.
+    """
+    # Validate command is not empty
+    if not command:
+        raise ValueError("Git command cannot be empty")
+    
+    # Validate command is in whitelist
+    if command[0] not in ALLOWED_GIT_COMMANDS:
+        raise ValueError(f"Invalid git command: {command[0]}. Allowed: {ALLOWED_GIT_COMMANDS}")
+    
     try:
         result = subprocess.run(
             ["git"] + command,
