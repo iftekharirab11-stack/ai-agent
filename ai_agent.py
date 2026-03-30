@@ -320,9 +320,10 @@ def init_git_repo() -> bool:
         return False
 
 
-def setup_git_remote() -> bool:
+def setup_git_remote(remote_url: Optional[str] = None) -> bool:
     """Setup Git remote origin if configured."""
-    if not CONFIG["github_repo_url"]:
+    url = remote_url or CONFIG["github_repo_url"]
+    if not url:
         log("GitHub repository URL not configured", "WARNING")
         return False
     
@@ -335,8 +336,8 @@ def setup_git_remote() -> bool:
             return True
         
         # Add remote
-        run_git_command(["remote", "add", "origin", CONFIG["github_repo_url"]])
-        log(f"Git remote 'origin' added: {CONFIG['github_repo_url']}")
+        run_git_command(["remote", "add", "origin", url])
+        log(f"Git remote 'origin' added: {url}")
         
         return True
     except Exception as e:
@@ -369,9 +370,10 @@ def git_add_and_commit(files: List[str], commit_message: str) -> bool:
         return False
 
 
-def git_push() -> bool:
+def git_push(remote_url: Optional[str] = None) -> bool:
     """Push changes to remote repository."""
-    if not CONFIG["github_repo_url"]:
+    url = remote_url or CONFIG["github_repo_url"]
+    if not url:
         log("GitHub repository URL not configured, skipping push", "WARNING")
         return False
     
