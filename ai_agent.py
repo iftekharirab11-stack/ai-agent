@@ -29,7 +29,7 @@ from typing import Optional, List, Dict
 
 CONFIG = {
     "ollama_model": "stablelm2:1.6b",
-    "github_repo_url": "",  # Set your GitHub repo URL here
+    "github_repo_url": "https://github.com/iftekharirab11-stack/ai-agent.git",  # GitHub repo URL
     "github_branch": "main",
     "output_file": "index.html",
     "prompt_file": "prompt.txt",
@@ -500,7 +500,8 @@ def process_single_prompt(prompt: str, prompt_index: int = 1) -> Dict:
     result["commit_message"] = commit_message
     
     # Step 6: Add and commit
-    if not git_add_and_commit([output_file], commit_message):
+    # Add all files (.) instead of just output_file to commit everything
+    if not git_add_and_commit(["."], commit_message):
         result["error"] = "Git commit failed"
         return result
     
