@@ -1,67 +1,126 @@
-Here's a simple HTML portfolio page with a header, three sections, and a footer:
+Here's an example of a simple responsive HTML portfolio page with a navbar and footer, using black and white themes:
 
-```html
+HTML:
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Portfolio</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background-color: #333;
-            color: white;
-            text-align: center;
-            padding: 1rem;
-        }
-
-        section {
-            padding: 2rem;
-        }
-
-        footer {
-            background-color: #333;
-            color: white;
-            text-align: center;
-            padding: 1rem;
-            margin-top: 1.5rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Portfolio</title>
+  <link rel="stylesheet" href="portfolio.css">
 </head>
 <body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">My Website</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbar-collapse">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="/services">Services</a></li>
+      </ul>
+    </div>
+  </nav>
 
-<header>
-    <h1>My Portfolio</h1>
-</header>
+  <!-- Container for portfolio content -->
+  <div class="container-fluid">
+    <section class="row">
+      <div class="col-md-3" style="background-color: black;">
+        <!-- Sidebar with black theme images -->
+        <div class="card card mb-4">
+          <div class="card-body">
+            <h5 class="card-title">Black Theme</h5>
+            <p class="card-text">This is a sidebar with black theme images.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-9" style="background-color: white;">
+        <!-- Main content for portfolio -->
+        <!-- Add your portfolio items here, each in their own div with unique id (e.g., "portfolio-item") -->
 
-<section id="section-1">
-    <!-- Add content for section 1 here -->
-    <p>This is the first section.</p>
-</section>
+        <!-- Footer section -->
+        <section class="row">
+          <div class="col-md-4" style="text-align: center;">
+            <!-- About section with white theme images -->
+            <h2>About</h2>
+            <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+            <img src="about.jpg" alt="About Image">
+          </div>
 
-<section id="section-2">
-    <!-- Add content for section 2 here -->
-    <p>This is the second section.</p>
-</section>
+          <div class="col-md-4" style="text-align: center;">
+            <!-- Services section with white theme images -->
+            <h2>Services</h2>
+            <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+            <img src="service1.jpg" alt="Service 1 Image">
+            <img src="service2.jpg" alt="Service .
 
-<section id="section-3">
-    <!-- Add content for section 3 here -->
-    <p>This is the third section.</p>
-</section>
+CSS (portfolio.css):
+* {
+    box-sizing: border-box;
+}
 
-<footer>
-    <p>Copyright Â© 2022 My Portfolio</p>
-</footer>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
 
-</body>
-</html>
-```
+a {
+    color: #333;
+    text-decoration: none;
+}
 
-This code creates a simple portfolio page with a header, three sections (each containing some content), and a footer. You can replace the placeholder text in the `#section-1`, `#section-2`, and `#section-3` ids with your own content as needed.
+a:hover {
+    color: #666;
+}
 
+.container-fluid {
+    padding-right: 15px; 
+    padding-left: 15px; 
+    margin-right: 15px;
+    margin-bottom: 15px;
+}
+  
+.card {
+    transition: background-color 0.3s ease-out;
+}
+
+.card-body {
+    max-height: 400px; 
+    overflow-y: auto;
+}
+
+CSS (styles.css):
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+a {
+    color: #333;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #666;
+}
+
+/* Style the navbar and its components */
+.navbar {
+    padding: 1rem;
+    background-color: black;
+}
+
+.navbar-brand {
+    color: white;
+}
+
+.navbar-toggler {
+    color: white;
