@@ -2,12 +2,74 @@
 ============================================================
 AUTO-DEVELOPER REPORT
 ============================================================
-Generated : 2026-03-31 14:41:05
-Model     : qwen2.5-coder:7b
+Generated : 2026-03-31 19:18:20
+Model     : moonshotai/kimi-k2-instruct
 
 PROMPT
 ------------------------------------------------------------
-why you failed
+Create a stunning single page website for "AI Agent Web" - 
+an AI powered auto developer tool built with Python and you.
+
+SECTIONS REQUIRED:
+
+1. NAVBAR
+- Logo text "AI Agent Web" on left with a glowing cyan color
+- Navigation links: Home, About, Process, Tech Stack, Contact
+- Sticky navbar that stays on top while scrolling
+- Dark background with a subtle border at bottom
+
+2. HERO SECTION
+- Giant bold heading: "Meet Your AI Developer"
+- Subheading: "Type a prompt. Get a website. Deployed automatically."
+- Two buttons: "See How It Works" and "View on GitHub"
+- Animated gradient background (purple to dark blue)
+- A glowing animated badge saying "Powered by Ollama AI"
+
+3. HOW IT WORKS SECTION
+- Title: "The Full Process"
+- 6 steps shown as a timeline with icons and descriptions:
+  Step 1 - Environment Setup: VS Code, Git, Python and Ollama installed on Windows
+  Step 2 - AI Code Generation: Python sends prompts to Ollama stablelm2 model locally
+  Step 3 - File Automation: Generated code saved automatically to project folder
+  Step 4 - Git Automation: Script runs git add, commit and push automatically
+  Step 5 - Live Deployment: GitHub Pages deploys the site instantly after every push
+  Step 6 - Chat Interface: Tkinter desktop chatbot lets you control everything by typing
+
+4. TECH STACK SECTION
+- Title: "Built With"
+- 6 glowing cards with name and description:
+  Python - Core automation language
+  Ollama - Local AI model runner
+  Tkinter - Desktop chat interface
+  Git - Version control automation
+  GitHub Pages - Free live deployment
+  VS Code - Development environment
+
+5. ABOUT SECTION
+- Title: "What Is AI Agent Web?"
+- Description: A fully automated AI developer agent that lives on your desktop.
+  You type a task, it generates code, saves files, commits to GitHub
+  and deploys your website live - all in under 2 minutes with zero manual work.
+
+6. CONTACT SECTION
+- Email: iftekharirab11@gmail.com
+- GitHub: github.com/iftekharirab11-stack
+
+7. FOOTER
+- Text: "Built automatically by AI Agent Web using Ollama and Python"
+- Small text: "Every line of this code was AI generated"
+
+DESIGN REQUIREMENTS:
+- Dark theme: background #0a0a0f
+- Neon accent colors: cyan #00ffff, purple #9d00ff, green #00ff88
+- Gradient text on all headings
+- Glowing box shadows on all cards
+- Smooth hover animations on buttons and cards
+- Timeline with connecting line for the process section
+- Fully responsive for mobile and desktop
+- Google Font: Inter or Space Grotesk
+- Pure HTML and CSS only - everything in one file
+- No JavaScript, no frameworks
 
 FILES UPDATED
 ------------------------------------------------------------
@@ -15,7 +77,7 @@ FILES UPDATED
 
 COMMIT MESSAGE
 ------------------------------------------------------------
-Auto-generated: why you failed...
+Auto-generated: Create a stunning single page website for "AI...
 
 DEPLOYMENT
 ------------------------------------------------------------
