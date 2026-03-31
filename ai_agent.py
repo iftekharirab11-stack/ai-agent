@@ -28,7 +28,7 @@ from typing import Optional, List, Dict
 # ============================================================================
 
 CONFIG = {
-    "ollama_model": "stablelm2:1.6b",
+    "ollama_model": "qwen2.5-coder:7b",
     "github_repo_url": os.environ.get("GITHUB_REPO_URL", ""),  # GitHub repo URL from environment
     "github_branch": "main",
     "output_file": "index.html",
