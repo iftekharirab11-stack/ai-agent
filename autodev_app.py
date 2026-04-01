@@ -185,16 +185,29 @@ def generate_code(prompt, status_callback=None):
             "max_tokens": 16000
         }
         
+        # DEBUG: Log request details
+        print(f"[DEBUG] API Key (first 10 chars): {OPENROUTER_API_KEY[:10]}...")
+        print(f"[DEBUG] Model: {MODEL}")
+        print(f"[DEBUG] Base URL: {BASE_URL}")
+        print(f"[DEBUG] Headers: {headers}")
+        print(f"[DEBUG] Payload: {json.dumps(payload, indent=2)}")
+        
         if status_callback:
             status_callback("Sending request to AI...")
         
         response = requests.post(BASE_URL, headers=headers, json=payload, timeout=120)
+        
+        # DEBUG: Log response details
+        print(f"[DEBUG] Response Status Code: {response.status_code}")
+        print(f"[DEBUG] Response Headers: {dict(response.headers)}")
+        print(f"[DEBUG] Response Body: {response.text[:500]}...")
         
         if status_callback:
             status_callback("Processing AI response...")
         
         if response.status_code != 200:
             error_msg = f"API Error {response.status_code}: {response.text}"
+            print(f"[DEBUG] Full error response: {response.text}")
             return None, error_msg
         
         data = response.json()
