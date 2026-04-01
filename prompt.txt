@@ -1,2 +1,0 @@
-Create a responsive HTML portfolio page with a navbar and footer
-with black and white theme, images, place info, and about section

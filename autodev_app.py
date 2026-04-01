@@ -1,692 +1,927 @@
-#!/usr/bin/env python3
 """
-Auto-Developer Desktop Chatbot Application
-AI-powered automation system for code generation, Git operations, and deployment.
-
-Features:
-- Dark-themed Tkinter GUI interface
-- Real-time status updates
-- Non-blocking UI with threading
-- Complete automation workflow
-- User-friendly interface with timestamps
+AI Agent Web — Auto Developer
+A professional Tkinter application that uses OpenRouter API (Kimi K2) to generate HTML websites
+and automatically commits them to GitHub with live deployment.
 """
 
 import tkinter as tk
-from tkinter import scrolledtext
-import threading
-import subprocess
+from tkinter import ttk, scrolledtext, messagebox
+import requests
+import json
 import os
-import re
-from datetime import datetime
-from pathlib import Path
-from typing import Optional, List, Dict
+import threading
+import datetime
+import subprocess
+import webbrowser
+import time
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 
+OPENROUTER_API_KEY = "YOUR_OPENROUTER_API_KEY_HERE"
+MODEL = "moonshotai/kimi-k2-instruct"
+BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 REMOTE_URL = "https://github.com/iftekharirab11-stack/ai-agent.git"
 LIVE_URL = "https://iftekharirab11-stack.github.io/ai-agent/"
-OLLAMA_MODEL = "qwen2.5-coder:7b"
 OUTPUT_FILE = "index.html"
+MEMORY_DIR = "memory"
+MEMORY_INDEX = os.path.join(MEMORY_DIR, "index.json")
 REPORT_FILE = "auto_report.txt"
 
-# ============================================================================
-# AI AGENT FUNCTIONS
-# ============================================================================
-
-def log(message: str, level: str = "INFO") -> None:
-    """Print formatted log messages with timestamp."""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] [{level}] {message}")
-
-
-def clean_ai_output(raw_output: str) -> str:
-    """
-    Clean AI-generated output by removing markdown code blocks.
-    Handles patterns like:
-    - ```html ... ```
-    - ``` ... ```
-    - Extra whitespace and explanations
-    """
-    # Remove markdown code blocks
-    # Pattern 1: ```html ... ```
-    cleaned = re.sub(r'```html\s*\n?', '', raw_output)
-    cleaned = re.sub(r'```\s*$', '', cleaned, flags=re.MULTILINE)
-    
-    # Pattern 2: ``` ... ``` (generic)
-    cleaned = re.sub(r'```\w*\s*\n?', '', cleaned)
-    cleaned = re.sub(r'```\s*$', '', cleaned, flags=re.MULTILINE)
-    
-    # Remove leading/trailing whitespace
-    cleaned = cleaned.strip()
-    
-    # If the output starts with explanation text, try to extract HTML
-    if cleaned and not cleaned.startswith('<!DOCTYPE') and not cleaned.startswith('<html'):
-        # Look for HTML content within the text
-        html_match = re.search(r'(<!DOCTYPE.*?</html>)', cleaned, re.DOTALL | re.IGNORECASE)
-        if html_match:
-            cleaned = html_match.group(1)
-    
-    return cleaned
-
-
-def is_valid_html(code: str) -> bool:
-    """Validate that the AI output is complete HTML."""
-    has_doctype = '<!DOCTYPE' in code.upper()
-    has_body_open = '<body' in code.lower()
-    has_body_close = '</body>' in code.lower()
-    has_html_close = '</html>' in code.lower()
-    has_content = len(code.strip()) > 500
-    return all([has_doctype, has_body_open, 
-                has_body_close, has_html_close, has_content])
-
-
-def generate_code_with_ollama(prompt: str) -> Optional[str]:
-    """
-    Generate code using Ollama AI model.
-    Returns the generated code or None on failure.
-    """
-    log(f"Generating code with model: {OLLAMA_MODEL}")
-    log(f"Prompt: {prompt[:100]}...")
-    
-    try:
-        # Check if Ollama is available
-        check_result = subprocess.run(
-            ["ollama", "list"],
-            capture_output=True,
-            text=True,
-            encoding='utf-8',
-            errors='replace',
-            timeout=10
-        )
-        
-        if check_result.returncode != 0:
-            log("Ollama is not running or not installed", "ERROR")
-            log("Please install Ollama from https://ollama.ai", "ERROR")
-            return None
-        
-        # Generate code with system instruction
-        system_instruction = """You are an expert HTML and CSS developer.
-When given a task, you must respond with ONLY a complete, 
-valid HTML file. Rules:
-- Start with <!DOCTYPE html>
-- End with </html>
-- Include ALL sections requested in the prompt
-- Include ALL CSS inside a <style> tag in the <head>
-- The <body> must contain ALL the HTML content
+SYSTEM_PROMPT = """You are an expert HTML and CSS developer. When given a task, respond with ONLY a complete valid HTML file. Rules:
+- Always start with <!DOCTYPE html>
+- Always end with </html>
+- Include ALL sections mentioned in the prompt
+- Write ALL CSS inside a <style> tag in <head>
+- The <body> must contain ALL HTML content, never leave it empty
+- Use Google Fonts via @import in CSS
+- Make it visually stunning with gradients and animations
 - Do NOT explain anything
 - Do NOT use markdown code fences
-- Return ONLY the raw HTML file, nothing else"""
-        
-        full_prompt = system_instruction + "\n\nTASK: " + prompt
-        
-        result = subprocess.run(
-            ["ollama", "run", OLLAMA_MODEL],
-            input=full_prompt,
-            text=True,
-            capture_output=True,
-            encoding='utf-8',
-            errors='replace',
-            timeout=300  # 5 minute timeout
-        )
-        
-        if result.returncode != 0:
-            log(f"Ollama error: {result.stderr}", "ERROR")
-            return None
-        
-        raw_output = result.stdout
-        
-        if not raw_output or not raw_output.strip():
-            log("Ollama returned empty output", "ERROR")
-            return None
-        
-        # Clean the output
-        cleaned_code = clean_ai_output(raw_output)
-        
-        if not cleaned_code:
-            log("Failed to clean AI output", "ERROR")
-            return None
-        
-        log(f"Generated {len(cleaned_code)} characters of code")
-        return cleaned_code
-        
-    except subprocess.TimeoutExpired:
-        log("Ollama generation timed out (5 minutes)", "ERROR")
-        return None
-    except FileNotFoundError:
-        log("Ollama command not found. Please install Ollama.", "ERROR")
-        return None
-    except Exception as e:
-        log(f"Unexpected error during code generation: {e}", "ERROR")
-        return None
+- Return ONLY the raw complete HTML file"""
 
+# ============================================================================
+# MEMORY SYSTEM
+# ============================================================================
 
-def save_code_to_file(code: str, filename: str) -> bool:
-    """Save generated code to a file."""
+def ensure_memory_dir():
+    """Create memory directory if it doesn't exist."""
+    if not os.path.exists(MEMORY_DIR):
+        os.makedirs(MEMORY_DIR)
+
+def load_memory_index():
+    """Load the memory index file."""
+    ensure_memory_dir()
+    if os.path.exists(MEMORY_INDEX):
+        try:
+            with open(MEMORY_INDEX, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return {"sessions": []}
+    return {"sessions": []}
+
+def save_memory_index(index_data):
+    """Save the memory index file."""
+    ensure_memory_dir()
+    with open(MEMORY_INDEX, 'w', encoding='utf-8') as f:
+        json.dump(index_data, f, indent=2, ensure_ascii=False)
+
+def save_memory(prompt, code, commit_message):
+    """Save a memory session after successful generation."""
+    ensure_memory_dir()
+    timestamp = datetime.datetime.now()
+    filename = timestamp.strftime("%Y-%m-%d_%H-%M-%S") + ".json"
+    filepath = os.path.join(MEMORY_DIR, filename)
+    
+    memory_data = {
+        "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        "prompt": prompt,
+        "model": MODEL,
+        "output_file": OUTPUT_FILE,
+        "code_length": len(code),
+        "code_preview": code[:300] if len(code) > 300 else code,
+        "commit_message": commit_message,
+        "github_url": REMOTE_URL,
+        "live_url": LIVE_URL,
+        "status": "success"
+    }
+    
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(memory_data, f, indent=2, ensure_ascii=False)
+    
+    # Update index
+    index_data = load_memory_index()
+    index_data["sessions"].append({
+        "filename": filename,
+        "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        "prompt": prompt[:100] + "..." if len(prompt) > 100 else prompt
+    })
+    save_memory_index(index_data)
+
+def load_last_sessions(count=5):
+    """Load the last N sessions from memory."""
+    index_data = load_memory_index()
+    sessions = index_data.get("sessions", [])
+    return sessions[-count:] if len(sessions) > count else sessions
+
+def get_last_prompt():
+    """Get the prompt from the last session for context injection."""
+    sessions = load_last_sessions(1)
+    if sessions:
+        filename = sessions[0]["filename"]
+        filepath = os.path.join(MEMORY_DIR, filename)
+        if os.path.exists(filepath):
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    return data.get("prompt", "")
+            except:
+                pass
+    return ""
+
+def clear_memory():
+    """Delete all memory files."""
+    ensure_memory_dir()
+    if os.path.exists(MEMORY_DIR):
+        for filename in os.listdir(MEMORY_DIR):
+            filepath = os.path.join(MEMORY_DIR, filename)
+            if os.path.isfile(filepath):
+                os.remove(filepath)
+
+# ============================================================================
+# CODE GENERATION
+# ============================================================================
+
+def validate_html(html_code):
+    """Validate that the HTML code is complete and valid."""
+    if not html_code:
+        return False, "Empty response"
+    
+    if "<!DOCTYPE" not in html_code and "<!doctype" not in html_code.lower():
+        return False, "Missing DOCTYPE declaration"
+    
+    if "<body" not in html_code.lower():
+        return False, "Missing <body> tag"
+    
+    if "</body>" not in html_code.lower():
+        return False, "Missing </body> tag"
+    
+    if "</html>" not in html_code.lower():
+        return False, "Missing </html> tag"
+    
+    if len(html_code) < 1000:
+        return False, f"Code too short ({len(html_code)} chars, minimum 1000)"
+    
+    return True, "Valid"
+
+def generate_code(prompt, status_callback=None):
+    """Generate HTML code using OpenRouter API with Kimi K2 model."""
     try:
-        # Create directory if it doesn't exist
-        filepath = Path(filename)
-        filepath.parent.mkdir(parents=True, exist_ok=True)
+        # Context injection from last session
+        last_prompt = get_last_prompt()
+        if last_prompt:
+            full_prompt = f"Previous task: {last_prompt}. New task: {prompt}"
+        else:
+            full_prompt = prompt
         
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(code)
+        if status_callback:
+            status_callback("Connecting to OpenRouter API...")
         
-        log(f"Code saved to {filename}")
-        return True
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/iftekharirab11-stack/ai-agent",
+            "X-Title": "AI Agent Web"
+        }
+        
+        payload = {
+            "model": MODEL,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": full_prompt}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 16000
+        }
+        
+        if status_callback:
+            status_callback("Sending request to AI...")
+        
+        response = requests.post(BASE_URL, headers=headers, json=payload, timeout=120)
+        
+        if status_callback:
+            status_callback("Processing AI response...")
+        
+        if response.status_code != 200:
+            error_msg = f"API Error {response.status_code}: {response.text}"
+            return None, error_msg
+        
+        data = response.json()
+        
+        if "choices" not in data or len(data["choices"]) == 0:
+            return None, "No response from AI model"
+        
+        code = data["choices"][0]["message"]["content"]
+        
+        # Clean up the response - remove markdown code fences if present
+        code = code.strip()
+        if code.startswith("```html"):
+            code = code[7:]
+        if code.startswith("```"):
+            code = code[3:]
+        if code.endswith("```"):
+            code = code[:-3]
+        code = code.strip()
+        
+        # Validate HTML
+        is_valid, validation_msg = validate_html(code)
+        if not is_valid:
+            return None, f"AI returned incomplete HTML — {validation_msg}"
+        
+        if status_callback:
+            status_callback("Code validated successfully!")
+        
+        return code, "Success"
+        
+    except requests.exceptions.Timeout:
+        return None, "Request timed out — please try again"
+    except requests.exceptions.ConnectionError:
+        return None, "Connection error — check your internet connection"
     except Exception as e:
-        log(f"Error saving code to {filename}: {e}", "ERROR")
-        return False
-
+        return None, f"Error: {str(e)}"
 
 # ============================================================================
 # GIT OPERATIONS
 # ============================================================================
 
-# Whitelist of allowed git commands for security
-ALLOWED_GIT_COMMANDS = {
-    "status", "init", "branch", "remote", "add", "commit", "push", "log", "diff"
-}
-
-
-def run_git_command(command: List[str], check: bool = True) -> subprocess.CompletedProcess:
-    """
-    Run a git command with validation.
-    
-    Security: Validates command against whitelist to prevent injection.
-    """
-    # Validate command is not empty
-    if not command:
-        raise ValueError("Git command cannot be empty")
-    
-    # Validate command is in whitelist
-    if command[0] not in ALLOWED_GIT_COMMANDS:
-        raise ValueError(f"Invalid git command: {command[0]}. Allowed: {ALLOWED_GIT_COMMANDS}")
-    
+def git_commit_push(code, prompt, status_callback=None):
+    """Commit and push the generated code to GitHub."""
     try:
+        # Save the code to file
+        with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
+            f.write(code)
+        
+        if status_callback:
+            status_callback("Saved code to " + OUTPUT_FILE)
+        
+        # Generate commit message
+        commit_message = f"AI Agent: {prompt[:50]}{'...' if len(prompt) > 50 else ''}"
+        
+        # Git operations
+        if status_callback:
+            status_callback("Adding files to git...")
+        
         result = subprocess.run(
-            ["git"] + command,
+            ["git", "add", "."],
+            cwd=os.getcwd(),
             capture_output=True,
             text=True,
-            encoding='utf-8',
-            errors='replace',
-            check=check
+            shell=True
         )
-        return result
-    except subprocess.CalledProcessError as e:
-        log(f"Git command failed: {' '.join(command)}", "ERROR")
-        log(f"Error: {e.stderr}", "ERROR")
-        raise
-    except FileNotFoundError:
-        log("Git is not installed or not in PATH", "ERROR")
-        raise
-
-
-def init_git_repo() -> bool:
-    """Initialize Git repository if not already initialized."""
-    try:
-        # Check if already a git repo
-        result = run_git_command(["status"], check=False)
         
-        if result.returncode == 0:
-            log("Git repository already initialized")
-            return True
+        if result.returncode != 0:
+            return False, f"Git add failed: {result.stderr}"
         
-        # Initialize new repo
-        run_git_command(["init"])
-        log("Git repository initialized")
+        if status_callback:
+            status_callback("Committing changes...")
         
-        # Set default branch to main
-        run_git_command(["branch", "-M", "main"])
-        log("Default branch set to main")
+        result = subprocess.run(
+            ["git", "commit", "-m", commit_message],
+            cwd=os.getcwd(),
+            capture_output=True,
+            text=True,
+            shell=True
+        )
         
-        return True
+        if result.returncode != 0:
+            # Check if it's just "nothing to commit"
+            if "nothing to commit" in result.stdout.lower():
+                return True, "No changes to commit"
+            return False, f"Git commit failed: {result.stderr}"
+        
+        if status_callback:
+            status_callback("Pushing to GitHub...")
+        
+        result = subprocess.run(
+            ["git", "push", "origin", "main"],
+            cwd=os.getcwd(),
+            capture_output=True,
+            text=True,
+            shell=True
+        )
+        
+        if result.returncode != 0:
+            return False, f"Git push failed: {result.stderr}"
+        
+        if status_callback:
+            status_callback("Successfully pushed to GitHub!")
+        
+        # Save memory
+        save_memory(prompt, code, commit_message)
+        
+        # Generate report
+        generate_report(prompt, code, commit_message)
+        
+        return True, commit_message
+        
     except Exception as e:
-        log(f"Failed to initialize Git repository: {e}", "ERROR")
-        return False
+        return False, f"Git error: {str(e)}"
 
-
-def setup_git_remote(remote_url: Optional[str] = None) -> bool:
-    """Setup Git remote origin if configured."""
-    url = remote_url or REMOTE_URL
-    if not url:
-        log("GitHub repository URL not configured", "WARNING")
-        return False
-    
-    try:
-        # Check if remote already exists
-        result = run_git_command(["remote", "-v"], check=False)
-        
-        if "origin" in result.stdout:
-            log("Git remote 'origin' already configured")
-            return True
-        
-        # Add remote
-        run_git_command(["remote", "add", "origin", url])
-        log(f"Git remote 'origin' added: {url}")
-        
-        return True
-    except Exception as e:
-        log(f"Failed to setup Git remote: {e}", "ERROR")
-        return False
-
-
-def git_add_and_commit(files: List[str], commit_message: str) -> bool:
-    """Add files and commit changes."""
-    try:
-        # Add files
-        for file in files:
-            run_git_command(["add", file])
-            log(f"Added {file} to staging")
-        
-        # Check if there are changes to commit
-        status_result = run_git_command(["status", "--porcelain"])
-        
-        if not status_result.stdout.strip():
-            log("No changes to commit")
-            return True
-        
-        # Commit
-        run_git_command(["commit", "-m", commit_message])
-        log(f"Committed with message: {commit_message}")
-        
-        return True
-    except Exception as e:
-        log(f"Failed to commit changes: {e}", "ERROR")
-        return False
-
-
-def git_push(remote_url: Optional[str] = None) -> bool:
-    """Push changes to remote repository."""
-    url = remote_url or REMOTE_URL
-    if not url:
-        log("GitHub repository URL not configured, skipping push", "WARNING")
-        return False
-    
-    try:
-        # Push to remote
-        log("Pushing to main...")
-        run_git_command(["push", "-u", "origin", "main"])
-        log("Successfully pushed to GitHub")
-        
-        return True
-    except Exception as e:
-        log(f"Failed to push to GitHub: {e}", "ERROR")
-        log("You may need to authenticate with GitHub", "ERROR")
-        return False
-
-
-# ============================================================================
-# REPORT GENERATION
-# ============================================================================
-
-def generate_report(
-    prompt: str,
-    files_updated: List[str],
-    commit_message: str,
-    github_url: Optional[str] = None
-) -> str:
-    """Generate a detailed report of the automation process."""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    # Generate GitHub Pages URL if repo URL is provided
-    pages_url = ""
-    if github_url:
-        # Extract username and repo from URL
-        # Format: https://github.com/username/repo.git
-        match = re.search(r'github\.com[:/]([^/]+)/([^/.]+)', github_url)
-        if match:
-            username = match.group(1)
-            repo = match.group(2)
-            pages_url = f"https://{username}.github.io/{repo}/"
-    
-    report = f"""
-{'='*60}
-AUTO-DEVELOPER REPORT
-{'='*60}
-
+def generate_report(prompt, code, commit_message):
+    """Generate an auto report file."""
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    report = f"""AI Agent Web — Auto Report
 Generated: {timestamp}
-Model: {OLLAMA_MODEL}
+Model: {MODEL}
+GitHub: {REMOTE_URL}
+Live: {LIVE_URL}
 
-{'='*60}
-PROMPT
-{'='*60}
+PROMPT:
 {prompt}
 
-{'='*60}
-FILES UPDATED
-{'='*60}
-{chr(10).join(f'- {f}' for f in files_updated)}
-
-{'='*60}
-COMMIT MESSAGE
-{'='*60}
+COMMIT MESSAGE:
 {commit_message}
 
-{'='*60}
-DEPLOYMENT
-{'='*60}
-GitHub Repository: {github_url or 'Not configured'}
-GitHub Pages URL: {pages_url or 'Not available'}
+CODE LENGTH: {len(code)} characters
 
-{'='*60}
-STATUS
-{'='*60}
-Code Generation: [OK] Complete
-File Save: [OK] Complete
-Git Commit: [OK] Complete
-Git Push: {'[OK] Complete' if github_url else '[SKIP] Skipped (no repo URL)'}
-Deployment: {'[OK] Live' if pages_url else '[SKIP] Not available'}
+CODE PREVIEW:
+{code[:500]}...
 
-{'='*60}
+---
+Report generated automatically by AI Agent Web
 """
-    return report
-
-
-def save_report(report: str, filename: str) -> bool:
-    """Save report to file."""
-    try:
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(report)
-        log(f"Report saved to {filename}")
-        return True
-    except Exception as e:
-        log(f"Error saving report: {e}", "ERROR")
-        return False
-
+    with open(REPORT_FILE, 'w', encoding='utf-8') as f:
+        f.write(report)
 
 # ============================================================================
-# TKINTER GUI APPLICATION
+# MAIN APPLICATION UI
 # ============================================================================
 
-class AutoDeveloperApp:
-    """Main application class for the Auto-Developer chatbot."""
-    
-    def __init__(self, root: tk.Tk):
+class AIAgentApp:
+    def __init__(self, root):
         self.root = root
-        self.root.title("Auto-Developer Agent v1.0")
-        self.root.geometry("900x700")
-        self.root.configure(bg="#1e1e1e")
+        self.root.title("AI Agent Web — Auto Developer")
+        self.root.geometry("1000x700")
+        self.root.minsize(850, 600)
+        self.root.configure(bg="#0d0d0d")
         
-        # Configure styles
+        # Status animation
+        self.status_animation_id = None
+        self.status_dots = 0
+        
+        # Session count
+        self.session_count = len(load_memory_index().get("sessions", []))
+        
+        # Build UI
         self.setup_ui()
-        self.show_welcome_message()
+        
+        # Load memory on startup
+        self.root.after(100, self.load_startup_memory)
     
     def setup_ui(self):
-        """Setup the user interface."""
-        # Main frame
-        main_frame = tk.Frame(self.root, bg="#1e1e1e")
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        """Setup the complete UI."""
+        # Top header bar
+        self.setup_header()
         
-        # Chat display area
-        self.chat_display = scrolledtext.ScrolledText(
-            main_frame,
-            wrap=tk.WORD,
-            bg="#2d2d2d",
+        # Chat area
+        self.setup_chat_area()
+        
+        # Buttons row
+        self.setup_buttons_row()
+        
+        # Input area
+        self.setup_input_area()
+        
+        # Bottom status bar
+        self.setup_status_bar()
+    
+    def setup_header(self):
+        """Setup the top header bar."""
+        header_frame = tk.Frame(self.root, bg="#111111", height=50)
+        header_frame.pack(fill=tk.X, padx=0, pady=0)
+        header_frame.pack_propagate(False)
+        
+        # Left side - title
+        title_label = tk.Label(
+            header_frame,
+            text="🤖 AI Agent Web",
+            font=("Segoe UI", 16, "bold"),
+            fg="#00ffff",
+            bg="#111111"
+        )
+        title_label.pack(side=tk.LEFT, padx=20, pady=10)
+        
+        # Right side - status indicators
+        status_frame = tk.Frame(header_frame, bg="#111111")
+        status_frame.pack(side=tk.RIGHT, padx=20, pady=10)
+        
+        # API status
+        self.api_status = tk.Label(
+            status_frame,
+            text="🟢 API Connected",
+            font=("Segoe UI", 9),
+            fg="#00ff88",
+            bg="#111111"
+        )
+        self.api_status.pack(side=tk.LEFT, padx=10)
+        
+        # Git status
+        self.git_status = tk.Label(
+            status_frame,
+            text="🟡 Git Ready",
+            font=("Segoe UI", 9),
+            fg="#ffaa00",
+            bg="#111111"
+        )
+        self.git_status.pack(side=tk.LEFT, padx=10)
+        
+        # Memory status
+        self.memory_status = tk.Label(
+            status_frame,
+            text="🔵 Memory Active",
+            font=("Segoe UI", 9),
+            fg="#4a9eff",
+            bg="#111111"
+        )
+        self.memory_status.pack(side=tk.LEFT, padx=10)
+        
+        # Separator line
+        separator = tk.Frame(self.root, bg="#333333", height=2)
+        separator.pack(fill=tk.X, padx=0, pady=0)
+    
+    def setup_chat_area(self):
+        """Setup the scrollable chat area."""
+        chat_frame = tk.Frame(self.root, bg="#0a0a0a")
+        chat_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        # Scrollbar
+        scrollbar = tk.Scrollbar(chat_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Chat text area
+        self.chat_area = tk.Text(
+            chat_frame,
+            bg="#0a0a0a",
             fg="#ffffff",
             font=("Consolas", 10),
-            insertbackground="#ffffff",
-            selectbackground="#4a9eff",
-            selectforeground="#ffffff",
-            state=tk.DISABLED
+            wrap=tk.WORD,
+            yscrollcommand=scrollbar.set,
+            state=tk.DISABLED,
+            padx=15,
+            pady=15,
+            spacing1=2,
+            spacing3=2
         )
-        self.chat_display.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        self.chat_area.pack(fill=tk.BOTH, expand=True)
+        scrollbar.config(command=self.chat_area.yview)
         
-        # Input frame
-        input_frame = tk.Frame(main_frame, bg="#1e1e1e")
-        input_frame.pack(fill=tk.X, pady=(0, 5))
+        # Configure text tags for different message types
+        self.chat_area.tag_configure("timestamp", foreground="#555555", font=("Consolas", 8))
+        self.chat_area.tag_configure("user", foreground="#4a9eff", font=("Consolas", 10, "bold"))
+        self.chat_area.tag_configure("agent", foreground="#00ff88", font=("Consolas", 10, "bold"))
+        self.chat_area.tag_configure("system", foreground="#ffaa00", font=("Consolas", 10, "bold"))
+        self.chat_area.tag_configure("error", foreground="#ff4444", font=("Consolas", 10, "bold"))
+        self.chat_area.tag_configure("memory", foreground="#aa88ff", font=("Consolas", 10, "bold"))
+        self.chat_area.tag_configure("success", foreground="#00ffcc", font=("Consolas", 10, "bold"))
+    
+    def setup_buttons_row(self):
+        """Setup the buttons row above input."""
+        buttons_frame = tk.Frame(self.root, bg="#0d0d0d")
+        buttons_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        # Memory button
+        memory_btn = tk.Button(
+            buttons_frame,
+            text="📂 Memory",
+            command=self.show_memory_popup,
+            bg="#1a1a1a",
+            fg="#aa88ff",
+            font=("Segoe UI", 9),
+            relief=tk.FLAT,
+            padx=15,
+            pady=5,
+            cursor="hand2"
+        )
+        memory_btn.pack(side=tk.LEFT, padx=5)
+        
+        # Clear Memory button
+        clear_btn = tk.Button(
+            buttons_frame,
+            text="🗑️ Clear Memory",
+            command=self.clear_memory_action,
+            bg="#1a1a1a",
+            fg="#ff4444",
+            font=("Segoe UI", 9),
+            relief=tk.FLAT,
+            padx=15,
+            pady=5,
+            cursor="hand2"
+        )
+        clear_btn.pack(side=tk.LEFT, padx=5)
+        
+        # Last Report button
+        report_btn = tk.Button(
+            buttons_frame,
+            text="📋 Last Report",
+            command=self.show_report_popup,
+            bg="#1a1a1a",
+            fg="#ffaa00",
+            font=("Segoe UI", 9),
+            relief=tk.FLAT,
+            padx=15,
+            pady=5,
+            cursor="hand2"
+        )
+        report_btn.pack(side=tk.LEFT, padx=5)
+        
+        # View Live button
+        live_btn = tk.Button(
+            buttons_frame,
+            text="🌐 View Live",
+            command=self.open_live_url,
+            bg="#1a1a1a",
+            fg="#00ffcc",
+            font=("Segoe UI", 9),
+            relief=tk.FLAT,
+            padx=15,
+            pady=5,
+            cursor="hand2"
+        )
+        live_btn.pack(side=tk.LEFT, padx=5)
+    
+    def setup_input_area(self):
+        """Setup the input area with send button."""
+        input_frame = tk.Frame(self.root, bg="#0d0d0d")
+        input_frame.pack(fill=tk.X, padx=10, pady=10)
         
         # Input field
-        self.input_field = tk.Entry(
+        self.input_field = tk.Text(
             input_frame,
-            bg="#2d2d2d",
+            bg="#1a1a1a",
             fg="#ffffff",
-            font=("Consolas", 10),
+            font=("Segoe UI", 11),
+            height=3,
+            wrap=tk.WORD,
             insertbackground="#ffffff",
-            relief=tk.FLAT
+            relief=tk.FLAT,
+            padx=10,
+            pady=10
         )
-        self.input_field.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
-        self.input_field.bind("<Return>", self.on_enter_pressed)
+        self.input_field.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+        
+        # Placeholder text
+        self.input_field.insert("1.0", "Describe what you want to build...")
+        self.input_field.bind("<FocusIn>", self.clear_placeholder)
+        self.input_field.bind("<FocusOut>", self.add_placeholder)
+        self.input_field.bind("<Return>", self.handle_enter_key)
         
         # Send button
-        self.send_button = tk.Button(
+        send_btn = tk.Button(
             input_frame,
-            text="Send",
-            bg="#4a9eff",
-            fg="#ffffff",
-            font=("Consolas", 10, "bold"),
+            text="SEND",
+            command=self.send_message,
+            bg="#00ff88",
+            fg="#000000",
+            font=("Segoe UI", 11, "bold"),
             relief=tk.FLAT,
-            command=self.send_message
+            padx=20,
+            pady=10,
+            cursor="hand2"
         )
-        self.send_button.pack(side=tk.RIGHT)
+        send_btn.pack(side=tk.RIGHT)
+    
+    def setup_status_bar(self):
+        """Setup the bottom status bar."""
+        status_frame = tk.Frame(self.root, bg="#111111", height=30)
+        status_frame.pack(fill=tk.X, side=tk.BOTTOM)
+        status_frame.pack_propagate(False)
         
-        # Status bar
-        self.status_var = tk.StringVar()
-        self.status_var.set("Ready")
-        status_bar = tk.Label(
-            main_frame,
-            textvariable=self.status_var,
-            bg="#1e1e1e",
-            fg="#c0c0c0",
-            font=("Consolas", 9),
-            anchor=tk.W
+        # Left side - status text
+        self.status_label = tk.Label(
+            status_frame,
+            text="Ready",
+            font=("Segoe UI", 9),
+            fg="#888888",
+            bg="#111111"
         )
-        status_bar.pack(fill=tk.X, pady=(5, 0))
+        self.status_label.pack(side=tk.LEFT, padx=20, pady=5)
+        
+        # Right side - session count
+        self.session_label = tk.Label(
+            status_frame,
+            text=f"Sessions: {self.session_count}",
+            font=("Segoe UI", 9),
+            fg="#888888",
+            bg="#111111"
+        )
+        self.session_label.pack(side=tk.RIGHT, padx=20, pady=5)
     
-    def show_welcome_message(self):
-        """Display welcome message."""
-        welcome = """
-╔══════════════════════════════════════════════════════════════╗
-║              AUTO-DEVELOPER AGENT v1.0                       ║
-║                                                              ║
-║  Welcome! I'm your AI-powered development assistant.         ║
-║                                                              ║
-║  What I can do:                                              ║
-║  • Generate code based on your prompts                       ║
-║  • Save files automatically                                  ║
-║  • Push to GitHub                                            ║
-║  • Deploy to GitHub Pages                                    ║
-║  • Generate detailed reports                                 ║
-║                                                              ║
-║  Just type your task and press Enter or click Send!          ║
-╚══════════════════════════════════════════════════════════════╝
-"""
-        self.display_message(welcome, "system")
+    # ========================================================================
+    # UI HELPER METHODS
+    # ========================================================================
     
-    def display_message(self, message: str, msg_type: str = "normal"):
-        """Display a message in the chat area."""
-        self.chat_display.config(state=tk.NORMAL)
+    def clear_placeholder(self, event):
+        """Clear placeholder text when input is focused."""
+        if self.input_field.get("1.0", tk.END).strip() == "Describe what you want to build...":
+            self.input_field.delete("1.0", tk.END)
+            self.input_field.configure(fg="#ffffff")
+    
+    def add_placeholder(self, event):
+        """Add placeholder text when input loses focus."""
+        if not self.input_field.get("1.0", tk.END).strip():
+            self.input_field.insert("1.0", "Describe what you want to build...")
+            self.input_field.configure(fg="#666666")
+    
+    def handle_enter_key(self, event):
+        """Handle Enter key press in input field."""
+        if not event.state & 0x1:  # Check if Shift is not pressed
+            self.send_message()
+            return "break"
+    
+    def add_message(self, message, msg_type="system"):
+        """Add a message to the chat area."""
+        self.chat_area.configure(state=tk.NORMAL)
         
         # Add timestamp
-        timestamp = datetime.now().strftime("%H:%M:%S")
+        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+        self.chat_area.insert(tk.END, f"[{timestamp}] ", "timestamp")
         
-        # Color coding based on message type
-        if msg_type == "user":
-            color = "#4a9eff"
-            prefix = f"[{timestamp}] You: "
-        elif msg_type == "agent":
-            color = "#4aff4a"
-            prefix = f"[{timestamp}] Agent: "
-        elif msg_type == "system":
-            color = "#ffff4a"
-            prefix = f"[{timestamp}] "
-        elif msg_type == "error":
-            color = "#ff4a4a"
-            prefix = f"[{timestamp}] ERROR: "
+        # Add message prefix based on type
+        prefixes = {
+            "user": "▶ You: ",
+            "agent": "🤖 Agent: ",
+            "system": "⚙ System: ",
+            "error": "✖ Error: ",
+            "memory": "📂 Memory: ",
+            "success": "✅ Done: "
+        }
+        
+        prefix = prefixes.get(msg_type, "")
+        if prefix:
+            self.chat_area.insert(tk.END, prefix, msg_type)
+        
+        # Add message content
+        self.chat_area.insert(tk.END, message + "\n\n")
+        
+        # Scroll to bottom
+        self.chat_area.see(tk.END)
+        self.chat_area.configure(state=tk.DISABLED)
+    
+    def update_status(self, text):
+        """Update the status bar text with animation."""
+        def update():
+            self.status_label.configure(text=text)
+        self.root.after(0, update)
+    
+    def start_status_animation(self, base_text):
+        """Start animated status with dots."""
+        def animate():
+            self.status_dots = (self.status_dots + 1) % 4
+            dots = "." * self.status_dots
+            self.update_status(base_text + dots)
+            self.status_animation_id = self.root.after(500, animate)
+        animate()
+    
+    def stop_status_animation(self):
+        """Stop the status animation."""
+        if self.status_animation_id:
+            self.root.after_cancel(self.status_animation_id)
+            self.status_animation_id = None
+    
+    def update_session_count(self):
+        """Update the session count display."""
+        self.session_count = len(load_memory_index().get("sessions", []))
+        self.session_label.configure(text=f"Sessions: {self.session_count}")
+    
+    # ========================================================================
+    # ACTION METHODS
+    # ========================================================================
+    
+    def load_startup_memory(self):
+        """Load and display last 5 sessions on startup."""
+        sessions = load_last_sessions(5)
+        if sessions:
+            self.add_message("Memory loaded — Last 5 sessions:", "memory")
+            for i, session in enumerate(sessions, 1):
+                prompt_preview = session.get("prompt", "Unknown")
+                timestamp = session.get("timestamp", "Unknown")
+                self.add_message(f"  {i}. [{timestamp}] {prompt_preview}", "memory")
         else:
-            color = "#ffffff"
-            prefix = f"[{timestamp}] "
-        
-        # Insert message with color
-        self.chat_display.insert(tk.END, prefix, msg_type)
-        self.chat_display.insert(tk.END, message + "\n")
-        
-        # Configure tag for color
-        self.chat_display.tag_config(msg_type, foreground=color)
-        
-        # Auto-scroll to bottom
-        self.chat_display.see(tk.END)
-        self.chat_display.config(state=tk.DISABLED)
-    
-    def update_status(self, status: str):
-        """Update the status bar."""
-        self.status_var.set(status)
-        self.root.update_idletasks()
-    
-    def on_enter_pressed(self, event):
-        """Handle Enter key press."""
-        self.send_message()
+            self.add_message("No previous sessions found in memory.", "memory")
     
     def send_message(self):
-        """Send user message and process task."""
-        user_input = self.input_field.get().strip()
+        """Handle sending a message."""
+        # Get input text
+        text = self.input_field.get("1.0", tk.END).strip()
         
-        if not user_input:
+        # Check for placeholder
+        if not text or text == "Describe what you want to build...":
             return
         
-        # Clear input field
-        self.input_field.delete(0, tk.END)
+        # Clear input
+        self.input_field.delete("1.0", tk.END)
         
-        # Display user message
-        self.display_message(user_input, "user")
+        # Add user message to chat
+        self.add_message(text, "user")
         
-        # Disable send button while processing
-        self.send_button.config(state=tk.DISABLED)
-        
-        # Start processing in a separate thread
-        thread = threading.Thread(
-            target=self.process_task_threaded,
-            args=(user_input,),
-            daemon=True
-        )
+        # Start generation in background thread
+        thread = threading.Thread(target=self.generate_and_deploy, args=(text,))
+        thread.daemon = True
         thread.start()
     
-    def process_task_threaded(self, user_input: str):
-        """Process task in a separate thread to keep UI responsive."""
-        try:
-            self.process_task(user_input)
-        except Exception as e:
-            self.root.after(0, self.display_message, f"Unexpected error: {e}", "error")
-        finally:
-            # Re-enable send button
-            self.root.after(0, lambda: self.send_button.config(state=tk.NORMAL))
-            self.root.after(0, self.update_status, "Ready")
-    
-    def process_task(self, user_input: str):
-        """Process the user's task through the complete workflow."""
-        # Step 1: Generate code
-        self.root.after(0, self.update_status, "Generating code with AI...")
-        self.root.after(0, self.display_message, "Generating code with Ollama AI...", "agent")
+    def generate_and_deploy(self, prompt):
+        """Generate code and deploy to GitHub (runs in background thread)."""
+        # Start status animation
+        self.root.after(0, lambda: self.start_status_animation("Generating"))
         
-        code = generate_code_with_ollama(user_input)
-        
-        if not code:
-            self.root.after(0, self.display_message, "Failed to generate code. Please check if Ollama is running.", "error")
-            return
-        
-        # Validate HTML before saving
-        if not is_valid_html(code):
-            self.root.after(0, self.display_message, "AI returned incomplete HTML — please try again", "error")
-            return
-        
-        # Display code preview
-        preview = code[:500] + "..." if len(code) > 500 else code
-        self.root.after(0, self.display_message, f"Generated {len(code)} characters of code", "agent")
-        self.root.after(0, self.display_message, f"Code Preview:\n{preview}", "system")
-        
-        # Step 2: Save code to file
-        self.root.after(0, self.update_status, "Saving file...")
-        self.root.after(0, self.display_message, f"Saving code to {OUTPUT_FILE}...", "agent")
-        
-        if not save_code_to_file(code, OUTPUT_FILE):
-            self.root.after(0, self.display_message, "Failed to save code to file.", "error")
-            return
-        
-        self.root.after(0, self.display_message, f"Code saved successfully to {OUTPUT_FILE}", "agent")
-        
-        # Step 3: Initialize Git
-        self.root.after(0, self.update_status, "Initializing Git...")
-        self.root.after(0, self.display_message, "Initializing Git repository...", "agent")
-        
-        if not init_git_repo():
-            self.root.after(0, self.display_message, "Failed to initialize Git repository.", "error")
-            return
-        
-        # Step 4: Setup remote
-        if REMOTE_URL:
-            self.root.after(0, self.update_status, "Setting up Git remote...")
-            self.root.after(0, self.display_message, "Setting up Git remote...", "agent")
-            setup_git_remote(REMOTE_URL)
-        else:
-            self.root.after(0, self.display_message, "Warning: GitHub repository URL not configured. Skipping remote setup.", "system")
-        
-        # Step 5: Add and commit
-        self.root.after(0, self.update_status, "Committing changes...")
-        self.root.after(0, self.display_message, "Adding and committing files...", "agent")
-        
-        commit_message = f"Auto-generated code: {user_input[:50]}..."
-        
-        if not git_add_and_commit(["."], commit_message):
-            self.root.after(0, self.display_message, "Failed to commit changes.", "error")
-            return
-        
-        self.root.after(0, self.display_message, "Changes committed successfully", "agent")
-        
-        # Step 6: Push to GitHub
-        if REMOTE_URL:
-            self.root.after(0, self.update_status, "Pushing to GitHub...")
-            self.root.after(0, self.display_message, "Pushing to GitHub...", "agent")
-            
-            if git_push(REMOTE_URL):
-                self.root.after(0, self.display_message, "Successfully pushed to GitHub!", "agent")
-            else:
-                self.root.after(0, self.display_message, "Failed to push to GitHub. You may need to authenticate.", "error")
-        else:
-            self.root.after(0, self.display_message, "Skipping push (no remote URL configured).", "system")
-        
-        # Step 7: Generate report
-        self.root.after(0, self.update_status, "Generating report...")
-        self.root.after(0, self.display_message, "Generating report...", "agent")
-        
-        report = generate_report(
-            prompt=user_input,
-            files_updated=[OUTPUT_FILE],
-            commit_message=commit_message,
-            github_url=REMOTE_URL
+        # Generate code
+        code, result = generate_code(
+            prompt,
+            status_callback=lambda msg: self.root.after(0, lambda: self.update_status(msg))
         )
         
-        save_report(report, REPORT_FILE)
-        self.root.after(0, self.display_message, f"Report saved to {REPORT_FILE}", "agent")
+        # Stop animation
+        self.root.after(0, self.stop_status_animation)
         
-        # Step 8: Display completion message
-        self.root.after(0, self.update_status, "Done")
-        self.root.after(0, self.display_message, "Task completed successfully!", "agent")
+        if code is None:
+            # Error occurred
+            self.root.after(0, lambda: self.add_message(result, "error"))
+            self.root.after(0, lambda: self.update_status("Error occurred"))
+            return
         
-        # Display summary
-        summary = f"""
-✓ Code generated with Ollama AI
-✓ File saved: {OUTPUT_FILE}
-✓ Changes committed to Git
-✓ Report saved: {REPORT_FILE}
-
-🌐 Your website is live at:
-   {LIVE_URL}
-
-Note: It may take a few minutes for GitHub Pages to deploy.
-"""
-        self.root.after(0, self.display_message, summary, "system")
-
+        # Success - show preview
+        self.root.after(0, lambda: self.add_message(f"Generated {len(code)} characters of HTML code", "agent"))
+        
+        # Commit and push
+        self.root.after(0, lambda: self.start_status_animation("Deploying"))
+        
+        success, commit_result = git_commit_push(
+            code,
+            prompt,
+            status_callback=lambda msg: self.root.after(0, lambda: self.update_status(msg))
+        )
+        
+        # Stop animation
+        self.root.after(0, self.stop_status_animation)
+        
+        if success:
+            self.root.after(0, lambda: self.add_message(f"Committed: {commit_result}", "success"))
+            self.root.after(0, lambda: self.add_message(f"Live at: {LIVE_URL}", "success"))
+            self.root.after(0, self.update_session_count)
+        else:
+            self.root.after(0, lambda: self.add_message(commit_result, "error"))
+        
+        self.root.after(0, lambda: self.update_status("Ready"))
+    
+    def show_memory_popup(self):
+        """Show popup with all memory sessions."""
+        popup = tk.Toplevel(self.root)
+        popup.title("Memory Sessions")
+        popup.geometry("600x400")
+        popup.configure(bg="#0d0d0d")
+        
+        # Title
+        title = tk.Label(
+            popup,
+            text="📂 All Memory Sessions",
+            font=("Segoe UI", 14, "bold"),
+            fg="#aa88ff",
+            bg="#0d0d0d"
+        )
+        title.pack(pady=10)
+        
+        # Sessions list
+        sessions = load_memory_index().get("sessions", [])
+        
+        if not sessions:
+            no_sessions = tk.Label(
+                popup,
+                text="No sessions found in memory.",
+                font=("Segoe UI", 10),
+                fg="#888888",
+                bg="#0d0d0d"
+            )
+            no_sessions.pack(pady=20)
+        else:
+            # Create scrollable frame
+            frame = tk.Frame(popup, bg="#0d0d0d")
+            frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+            
+            canvas = tk.Canvas(frame, bg="#0d0d0d", highlightthickness=0)
+            scrollbar = tk.Scrollbar(frame, orient=tk.VERTICAL, command=canvas.yview)
+            scrollable_frame = tk.Frame(canvas, bg="#0d0d0d")
+            
+            scrollable_frame.bind(
+                "<Configure>",
+                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+            )
+            
+            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+            canvas.configure(yscrollcommand=scrollbar.set)
+            
+            # Add sessions
+            for i, session in enumerate(reversed(sessions), 1):
+                session_frame = tk.Frame(scrollable_frame, bg="#1a1a1a", padx=10, pady=5)
+                session_frame.pack(fill=tk.X, pady=2)
+                
+                timestamp = session.get("timestamp", "Unknown")
+                prompt = session.get("prompt", "Unknown")
+                
+                label = tk.Label(
+                    session_frame,
+                    text=f"{i}. [{timestamp}] {prompt}",
+                    font=("Consolas", 9),
+                    fg="#ffffff",
+                    bg="#1a1a1a",
+                    anchor="w"
+                )
+                label.pack(fill=tk.X)
+            
+            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Close button
+        close_btn = tk.Button(
+            popup,
+            text="Close",
+            command=popup.destroy,
+            bg="#1a1a1a",
+            fg="#ffffff",
+            font=("Segoe UI", 10),
+            relief=tk.FLAT,
+            padx=20,
+            pady=5,
+            cursor="hand2"
+        )
+        close_btn.pack(pady=10)
+    
+    def clear_memory_action(self):
+        """Clear all memory after confirmation."""
+        result = messagebox.askyesno(
+            "Clear Memory",
+            "Are you sure you want to delete all memory sessions?\n\nThis action cannot be undone.",
+            icon="warning"
+        )
+        
+        if result:
+            clear_memory()
+            self.add_message("All memory sessions have been deleted.", "system")
+            self.update_session_count()
+    
+    def show_report_popup(self):
+        """Show popup with the last report."""
+        popup = tk.Toplevel(self.root)
+        popup.title("Last Report")
+        popup.geometry("700x500")
+        popup.configure(bg="#0d0d0d")
+        
+        # Title
+        title = tk.Label(
+            popup,
+            text="📋 Last Auto Report",
+            font=("Segoe UI", 14, "bold"),
+            fg="#ffaa00",
+            bg="#0d0d0d"
+        )
+        title.pack(pady=10)
+        
+        # Report content
+        if os.path.exists(REPORT_FILE):
+            with open(REPORT_FILE, 'r', encoding='utf-8') as f:
+                report_content = f.read()
+            
+            text_area = scrolledtext.ScrolledText(
+                popup,
+                bg="#1a1a1a",
+                fg="#ffffff",
+                font=("Consolas", 10),
+                wrap=tk.WORD,
+                padx=15,
+                pady=15
+            )
+            text_area.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+            text_area.insert("1.0", report_content)
+            text_area.configure(state=tk.DISABLED)
+        else:
+            no_report = tk.Label(
+                popup,
+                text="No report found. Generate a website first.",
+                font=("Segoe UI", 10),
+                fg="#888888",
+                bg="#0d0d0d"
+            )
+            no_report.pack(pady=20)
+        
+        # Close button
+        close_btn = tk.Button(
+            popup,
+            text="Close",
+            command=popup.destroy,
+            bg="#1a1a1a",
+            fg="#ffffff",
+            font=("Segoe UI", 10),
+            relief=tk.FLAT,
+            padx=20,
+            pady=5,
+            cursor="hand2"
+        )
+        close_btn.pack(pady=10)
+    
+    def open_live_url(self):
+        """Open the GitHub Pages URL in browser."""
+        webbrowser.open(LIVE_URL)
+        self.add_message(f"Opened {LIVE_URL} in browser", "system")
 
 # ============================================================================
 # MAIN ENTRY POINT
 # ============================================================================
 
 def main():
-    """Main entry point for the Auto-Developer application."""
+    """Main entry point for the application."""
     root = tk.Tk()
-    app = AutoDeveloperApp(root)
+    app = AIAgentApp(root)
     root.mainloop()
-
 
 if __name__ == "__main__":
     main()
