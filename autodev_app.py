@@ -6,7 +6,7 @@ and automatically commits them to GitHub with live deployment.
 
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
-import requests
+from groq import Groq
 import json
 import os
 import threading
@@ -14,14 +14,17 @@ import datetime
 import subprocess
 import webbrowser
 import time
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 
-OPENROUTER_API_KEY = "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"
-MODEL = "moonshotai/kimi-k2.5"
-BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+MODEL = "moonshotai/kimi-k2-instruct-0905"
+BASE_URL = "https://api.groq.com"
 REMOTE_URL = "https://github.com/iftekharirab11-stack/ai-agent.git"
 LIVE_URL = "https://iftekharirab11-stack.github.io/ai-agent/"
 OUTPUT_FILE = "index.html"
@@ -169,7 +172,7 @@ def generate_code(prompt, status_callback=None):
             status_callback("Connecting to OpenRouter API...")
         
         headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Authorization": f"Bearer {GROQ_API_KEY}",
             "Content-Type": "application/json",
             "HTTP-Referer": "https://github.com/iftekharirab11-stack/ai-agent",
             "X-Title": "AI Agent Web"
@@ -186,7 +189,7 @@ def generate_code(prompt, status_callback=None):
         }
         
         # DEBUG: Log request details
-        print(f"[DEBUG] API Key (first 10 chars): {OPENROUTER_API_KEY[:10]}...")
+        print(f"[DEBUG] API Key (first 10 chars): {GROQ_API_KEY[:10]}...")
         print(f"[DEBUG] Model: {MODEL}")
         print(f"[DEBUG] Base URL: {BASE_URL}")
         print(f"[DEBUG] Headers: {headers}")
