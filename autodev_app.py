@@ -14,6 +14,7 @@ import datetime
 import subprocess
 import webbrowser
 import time
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
