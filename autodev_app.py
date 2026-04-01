@@ -27,7 +27,7 @@ from typing import Optional, List, Dict
 
 REMOTE_URL = "https://github.com/iftekharirab11-stack/ai-agent.git"
 LIVE_URL = "https://iftekharirab11-stack.github.io/ai-agent/"
-OLLAMA_MODEL = "stablelm2:1.6b"
+OLLAMA_MODEL = "qwen2.5-coder:7b"
 OUTPUT_FILE = "index.html"
 REPORT_FILE = "auto_report.txt"
 
@@ -71,6 +71,17 @@ def clean_ai_output(raw_output: str) -> str:
     return cleaned
 
 
+def is_valid_html(code: str) -> bool:
+    """Validate that the AI output is complete HTML."""
+    has_doctype = '<!DOCTYPE' in code.upper()
+    has_body_open = '<body' in code.lower()
+    has_body_close = '</body>' in code.lower()
+    has_html_close = '</html>' in code.lower()
+    has_content = len(code.strip()) > 500
+    return all([has_doctype, has_body_open, 
+                has_body_close, has_html_close, has_content])
+
+
 def generate_code_with_ollama(prompt: str) -> Optional[str]:
     """
     Generate code using Ollama AI model.
@@ -95,10 +106,24 @@ def generate_code_with_ollama(prompt: str) -> Optional[str]:
             log("Please install Ollama from https://ollama.ai", "ERROR")
             return None
         
-        # Generate code
+        # Generate code with system instruction
+        system_instruction = """You are an expert HTML and CSS developer.
+When given a task, you must respond with ONLY a complete, 
+valid HTML file. Rules:
+- Start with <!DOCTYPE html>
+- End with </html>
+- Include ALL sections requested in the prompt
+- Include ALL CSS inside a <style> tag in the <head>
+- The <body> must contain ALL the HTML content
+- Do NOT explain anything
+- Do NOT use markdown code fences
+- Return ONLY the raw HTML file, nothing else"""
+        
+        full_prompt = system_instruction + "\n\nTASK: " + prompt
+        
         result = subprocess.run(
             ["ollama", "run", OLLAMA_MODEL],
-            input=prompt,
+            input=full_prompt,
             text=True,
             capture_output=True,
             encoding='utf-8',
@@ -557,6 +582,11 @@ class AutoDeveloperApp:
         
         if not code:
             self.root.after(0, self.display_message, "Failed to generate code. Please check if Ollama is running.", "error")
+            return
+        
+        # Validate HTML before saving
+        if not is_valid_html(code):
+            self.root.after(0, self.display_message, "AI returned incomplete HTML — please try again", "error")
             return
         
         # Display code preview
