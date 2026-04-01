@@ -19,8 +19,8 @@ import time
 # CONFIGURATION
 # ============================================================================
 
-OPENROUTER_API_KEY = "YOUR_OPENROUTER_API_KEY_HERE"
-MODEL = "moonshotai/kimi-k2-instruct"
+OPENROUTER_API_KEY = "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"
+MODEL = "moonshotai/kimi-k2.5"
 BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 REMOTE_URL = "https://github.com/iftekharirab11-stack/ai-agent.git"
 LIVE_URL = "https://iftekharirab11-stack.github.io/ai-agent/"
