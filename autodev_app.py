@@ -14,7 +14,6 @@ import datetime
 import subprocess
 import webbrowser
 import time
-import requests
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,7 +24,6 @@ load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 MODEL = "moonshotai/kimi-k2-instruct-0905"
-BASE_URL = "https://api.groq.com"
 REMOTE_URL = "https://github.com/iftekharirab11-stack/ai-agent.git"
 LIVE_URL = "https://iftekharirab11-stack.github.io/ai-agent/"
 OUTPUT_FILE = "index.html"
@@ -160,7 +158,7 @@ def validate_html(html_code):
     return True, "Valid"
 
 def generate_code(prompt, status_callback=None):
-    """Generate HTML code using OpenRouter API with Kimi K2 model."""
+    """Generate HTML code using Groq API with Kimi K2 model."""
     try:
         # Context injection from last session
         last_prompt = get_last_prompt()
@@ -170,56 +168,37 @@ def generate_code(prompt, status_callback=None):
             full_prompt = prompt
         
         if status_callback:
-            status_callback("Connecting to OpenRouter API...")
+            status_callback("Connecting to Groq API...")
         
-        headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://github.com/iftekharirab11-stack/ai-agent",
-            "X-Title": "AI Agent Web"
-        }
-        
-        payload = {
-            "model": MODEL,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": full_prompt}
-            ],
-            "temperature": 0.7,
-            "max_tokens": 16000
-        }
+        # Initialize Groq client
+        client = Groq(api_key=GROQ_API_KEY)
         
         # DEBUG: Log request details
         print(f"[DEBUG] API Key (first 10 chars): {GROQ_API_KEY[:10]}...")
         print(f"[DEBUG] Model: {MODEL}")
-        print(f"[DEBUG] Base URL: {BASE_URL}")
-        print(f"[DEBUG] Headers: {headers}")
-        print(f"[DEBUG] Payload: {json.dumps(payload, indent=2)}")
         
         if status_callback:
             status_callback("Sending request to AI...")
         
-        response = requests.post(BASE_URL, headers=headers, json=payload, timeout=120)
+        # Make API call using Groq client
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": full_prompt}
+            ],
+            model=MODEL,
+            temperature=0.7,
+            max_tokens=16000
+        )
         
         # DEBUG: Log response details
-        print(f"[DEBUG] Response Status Code: {response.status_code}")
-        print(f"[DEBUG] Response Headers: {dict(response.headers)}")
-        print(f"[DEBUG] Response Body: {response.text[:500]}...")
+        print(f"[DEBUG] Response: {chat_completion}")
         
         if status_callback:
             status_callback("Processing AI response...")
         
-        if response.status_code != 200:
-            error_msg = f"API Error {response.status_code}: {response.text}"
-            print(f"[DEBUG] Full error response: {response.text}")
-            return None, error_msg
-        
-        data = response.json()
-        
-        if "choices" not in data or len(data["choices"]) == 0:
-            return None, "No response from AI model"
-        
-        code = data["choices"][0]["message"]["content"]
+        # Extract code from response
+        code = chat_completion.choices[0].message.content
         
         # Clean up the response - remove markdown code fences if present
         code = code.strip()
@@ -241,10 +220,6 @@ def generate_code(prompt, status_callback=None):
         
         return code, "Success"
         
-    except requests.exceptions.Timeout:
-        return None, "Request timed out — please try again"
-    except requests.exceptions.ConnectionError:
-        return None, "Connection error — check your internet connection"
     except Exception as e:
         return None, f"Error: {str(e)}"
 
