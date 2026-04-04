@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ============================================================================
+# ================================================= ===========================
 # CONFIGURATION
 # ============================================================================
 
@@ -160,48 +160,38 @@ def validate_html(html_code):
 def generate_code(prompt, status_callback=None):
     """Generate HTML code using Groq API with Kimi K2 model."""
     try:
-        # Context injection from last session
         last_prompt = get_last_prompt()
         if last_prompt:
-            full_prompt = f"Previous task: {last_prompt}. New task: {prompt}"
+            full_prompt = "Previous task: " + last_prompt + ". New task: " + prompt
         else:
             full_prompt = prompt
-        
+
         if status_callback:
             status_callback("Connecting to Groq API...")
-        
-        # Initialize Groq client
+
         client = Groq(api_key=GROQ_API_KEY)
-        
-        # DEBUG: Log request details
-        print(f"[DEBUG] API Key (first 10 chars): {GROQ_API_KEY[:10]}...")
-        print(f"[DEBUG] Model: {MODEL}")
-        
+
         if status_callback:
-            status_callback("Sending request to AI...")
-        
-        # Make API call using Groq client
-        chat_completion = client.chat.completions.create(
+            status_callback("Sending request to Kimi K2...")
+
+        completion = client.chat.completions.create(
+            model=MODEL,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": full_prompt}
             ],
-            model=MODEL,
-            temperature=0.7,
-            max_tokens=16000
+            temperature=1,
+            max_completion_tokens=16000,
+            top_p=1,
+            stream=False,
+            stop=None
         )
-        
-        # DEBUG: Log response details
-        print(f"[DEBUG] Response: {chat_completion}")
-        
+
         if status_callback:
             status_callback("Processing AI response...")
-        
-        # Extract code from response
-        code = chat_completion.choices[0].message.content
-        
-        # Clean up the response - remove markdown code fences if present
-        code = code.strip()
+
+        code = completion.choices[0].message.content.strip()
+
         if code.startswith("```html"):
             code = code[7:]
         if code.startswith("```"):
@@ -209,23 +199,19 @@ def generate_code(prompt, status_callback=None):
         if code.endswith("```"):
             code = code[:-3]
         code = code.strip()
-        
-        # Validate HTML
+
         is_valid, validation_msg = validate_html(code)
         if not is_valid:
-            return None, f"AI returned incomplete HTML — {validation_msg}"
-        
+            return None, "AI returned incomplete HTML - " + validation_msg
+
         if status_callback:
             status_callback("Code validated successfully!")
-        
-        return code, "Success"
-        
-    except Exception as e:
-        return None, f"Error: {str(e)}"
 
-# ============================================================================
-# GIT OPERATIONS
-# ============================================================================
+        return code, "Success"
+
+    except Exception as e:
+        return None, "Groq Error: " + str(e)
+
 
 def git_commit_push(code, prompt, status_callback=None):
     """Commit and push the generated code to GitHub."""
