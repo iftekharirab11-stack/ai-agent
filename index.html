@@ -3,35 +3,1070 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iftekhar Mohammad Irab</title>
+    <title>ContentAI Studio | LinkedIn Ghostwriting for Business Leaders</title>
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --accent: #0ea5e9;
+            --dark: #0f172a;
+            --dark-secondary: #1e293b;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --surface: #ffffff;
+            --surface-alt: #f8fafc;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * {
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f9;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--dark);
+            background: var(--surface);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
         .container {
-            max-width: 800px;
-            margin: auto;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header / Navigation */
+        header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo img {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--dark);
+            letter-spacing: -0.02em;
+        }
+
+        .logo-text span {
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--gray);
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
             background: white;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            color: var(--dark);
+            border: 1px solid var(--border);
         }
-        h1 {
-            color: #333;
+
+        .btn-secondary:hover {
+            background: var(--surface-alt);
+            border-color: var(--gray-light);
         }
-        p {
-            color: #666;
+
+        /* Hero Section */
+        .hero {
+            padding: 80px 0 60px;
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #f0f9ff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hero h1 {
+            font-size: clamp(36px, 5vw, 56px);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            color: var(--dark);
+            margin-bottom: 24px;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto 32px;
+            line-height: 1.7;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .trust-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+        }
+
+        .trust-item {
+            font-size: 14px;
+            color: var(--gray-light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trust-item svg {
+            width: 16px;
+            height: 16px;
+            color: var(--success);
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 60px 0;
+            background: white;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 32px;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            font-size: 40px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.02em;
+        }
+
+        .stat-item p {
+            font-size: 15px;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 0;
+            background: var(--surface-alt);
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 48px;
+        }
+
+        .section-header h2 {
+            font-size: clamp(28px, 4vw, 36px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            font-size: 16px;
+            color: var(--gray);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon svg {
+            width: 24px;
+            height: 24px;
+            color: var(--primary);
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            font-size: 15px;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .pricing-card.popular {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
+        }
+
+        .pricing-card .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 16px;
+            border-radius: 50px;
+        }
+
+        .pricing-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .pricing-card .price {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        .pricing-card .price span {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--gray);
+        }
+
+        .pricing-card .desc {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pricing-card ul {
+            list-style: none;
+        }
+
+        .pricing-card ul li {
+            font-size: 14px;
+            color: var(--dark-secondary);
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--surface-alt);
+        }
+
+        .pricing-card ul li:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-card ul li svg {
+            width: 18px;
+            height: 18px;
+            color: var(--success);
+            flex-shrink: 0;
+        }
+
+        /* Contact Form Section */
+        .contact {
+            padding: 80px 0;
+            background: linear-gradient(180deg, var(--surface-alt) 0%, white 100%);
+        }
+
+        .contact-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 48px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border);
+        }
+
+        .contact-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .contact-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .contact-header p {
+            font-size: 15px;
+            color: var(--gray);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .form-group label .required {
+            color: #ef4444;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-family: inherit;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            background: white;
+            color: var(--dark);
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: var(--gray-light);
+        }
+
+        select.form-control {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 44px;
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .dynamic-response {
+            background: #f0f9ff;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #bae6fd;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #0369a1;
+            display: none;
+        }
+
+        .dynamic-response.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            margin-top: 8px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Contact Info */
+        .contact-info {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .contact-info p {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 8px;
+        }
+
+        .contact-info a {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 80px 0;
+            background: var(--dark);
+            color: white;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .cta p {
+            font-size: 16px;
+            color: var(--gray-light);
+            max-width: 500px;
+            margin: 0 auto 32px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 32px 0;
+            background: var(--surface-alt);
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-content p {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-links a {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 60px 0 40px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .features-grid,
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-container {
+                padding: 32px 24px;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* Loader */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-loading .loading {
+            display: inline-block;
+        }
+
+        .btn-loading .btn-text {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Iftekhar Mohammad Irab</h1>
-        <p>CONTACT INFO</p>
-        <p>NUMBER +8801619804451 </p>
-        <p>iftekharirab11@gmail.com</p>
-    </div>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav class="nav">
+                <a href="#" class="logo">
+                    <img src="logo.jpg" alt="ContentAI Studio" onerror="this.style.display='none'">
+                    <div class="logo-text">Content<span>AI</span></div>
+                </a>
+                <div class="nav-links">
+                    <a href="#features">Features</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="#contact">Contact</a>
+                    <a href="mailto:contentai.bd@gmail.com" class="btn btn-primary">Get Started</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="badge">
+                    <span class="badge-dot"></span>
+                    LinkedIn Ghostwriting Agency
+                </div>
+                <h1>Your LinkedIn. <span>Fully Written.</span> Always Consistent.</h1>
+                <p class="hero-subtitle">We create compelling LinkedIn content for founders, executives, and thought leaders who want to build authority, attract clients, and grow their network — without spending hours writing posts.</p>
+                <div class="hero-cta">
+                    <a href="#contact" class="btn btn-primary">Get Your Free Sample</a>
+                    <a href="#pricing" class="btn btn-secondary">View Plans</a>
+                </div>
+                <div class="trust-bar">
+                    <div class="trust-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        500+ Clients Served
+                    </div>
+                    <div class="trust-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        24-Hour Delivery
+                    </div>
+                    <div class="trust-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        4.9/5 Rating
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>500+</h3>
+                    <p>Happy Clients</p>
+                </div>
+                <div class="stat-item">
+                    <h3>10K+</h3>
+                    <p>Posts Written</p>
+                </div>
+                <div class="stat-item">
+                    <h3>24hrs</h3>
+                    <p>Average Delivery</p>
+                </div>
+                <div class="stat-item">
+                    <h3>98%</h3>
+                    <p>Client Retention</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>How It Works</h2>
+                <p>Three simple steps to transform your LinkedIn presence</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </div>
+                    <h3>01. Share Your Story</h3>
+                    <p>Fill our brief onboarding form. We learn your voice, niche, goals, and audience in just 10 minutes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </div>
+                    <h3>02. We Write Everything</h3>
+                    <p>We produce a full month of LinkedIn posts in your authentic voice. You review and approve — takes under 5 minutes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <h3>03. Stay Consistent</h3>
+                    <p>Posts go live on schedule. Your audience grows. Leads start coming to you instead of chasing them.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <div class="section-header">
+                <h2>Simple, Transparent Pricing</h2>
+                <p>Choose the plan that fits your growth goals</p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Starter</h3>
+                    <div class="price">$149<span>/mo</span></div>
+                    <p class="desc">For founders testing the waters.</p>
+                    <ul>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> 8 LinkedIn posts/month</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Content calendar</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Your voice & tone</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Email support</li>
+                    </ul>
+                </div>
+                <div class="pricing-card popular">
+                    <div class="popular-badge">Most Popular</div>
+                    <h3>Growth</h3>
+                    <div class="price">$249<span>/mo</span></div>
+                    <p class="desc">For coaches scaling their audience.</p>
+                    <ul>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> 16 LinkedIn posts/month</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> 1 newsletter edition</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Content strategy call</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Priority delivery</li>
+                    </ul>
+                </div>
+                <div class="pricing-card">
+                    <h3>Authority</h3>
+                    <div class="price">$449<span>/mo</span></div>
+                    <p class="desc">For consultants building a brand.</p>
+                    <ul>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> 20 LinkedIn posts/month</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Newsletter + Twitter/X</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Monthly strategy review</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Dedicated writer</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Form Section -->
+    <section class="contact" id="contact">
+        <div class="container">
+            <div class="contact-container">
+                <div class="contact-header">
+                    <h2>Start Your Journey</h2>
+                    <p>Fill out the form below and we'll be in touch within 24 hours</p>
+                </div>
+
+                <!-- Dynamic Client Response -->
+                <div id="dynamicResponse" class="dynamic-response"></div>
+
+                <form id="inquiryForm" method="GET" action="https://mail.google.com/mail/u/0/" target="_blank">
+                    <input type="hidden" name="view" value="cm">
+                    <input type="hidden" name="fs" value="1">
+                    <input type="hidden" name="tf" value="1">
+                    <input type="hidden" name="to" value="contentai.bd@gmail.com">
+
+                    <div class="form-group">
+                        <label>Which plan are you choosing? <span class="required">*</span></label>
+                        <select name="plan" id="planSelect" class="form-control" required>
+                            <option value="">Select a plan...</option>
+                            <option value="Starter ($149/mo)">Starter - $149/mo</option>
+                            <option value="Growth ($249/mo)">Growth - $249/mo</option>
+                            <option value="Authority ($449/mo)">Authority - $449/mo</option>
+                            <option value="Custom">Custom / Not Sure</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Name <span class="required">*</span></label>
+                        <input type="text" name="name" id="nameInput" class="form-control" placeholder="Your full name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Industry you work with <span class="required">*</span></label>
+                        <input type="text" name="industry" id="industryInput" class="form-control" placeholder="e.g., SaaS, Finance, Healthcare, etc." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Motive (e.g., acquiring new clients, building trust, etc.) <span class="required">*</span></label>
+                        <textarea name="motive" id="motiveInput" class="form-control" placeholder="Tell us what you want to achieve with your LinkedIn presence..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-submit">
+                        <span class="btn-text">Submit — Connect via Gmail</span>
+                        <span class="loading"></span>
+                    </button>
+                </form>
+
+                <div class="contact-info">
+                    <p>Prefer to reach out directly?</p>
+                    <a href="mailto:contentai.bd@gmail.com">contentai.bd@gmail.com</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to Transform Your LinkedIn?</h2>
+            <p>Get one free LinkedIn post — no commitment. Let us show you what we can do.</p>
+            <a href="#contact" class="btn btn-primary">Submit — Get Started Now</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2025 ContentAI Studio. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="mailto:contentai.bd@gmail.com">Contact</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Dynamic Client Response Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load saved data from localStorage
+            loadSavedData();
+
+            // Select elements
+            const planSelect = document.getElementById('planSelect');
+            const nameInput = document.getElementById('nameInput');
+            const industryInput = document.getElementById('industryInput');
+            const motiveInput = document.getElementById('motiveInput');
+            const dynamicResponse = document.getElementById('dynamicResponse');
+            const form = document.getElementById('inquiryForm');
+
+            // Dynamic Client Response - Show personalized message based on inputs
+            function updateDynamicResponse() {
+                let messages = [];
+                const plan = planSelect.value;
+                const name = nameInput.value.trim();
+                const industry = industryInput.value.trim();
+                const motive = motiveInput.value.trim();
+
+                if (name) {
+                    messages.push(`Welcome back, <strong>${name}</strong>!`);
+                }
+
+                if (plan && plan !== 'Custom') {
+                    const planNames = {
+                        'Starter ($149/mo)': 'Starter plan for getting started',
+                        'Growth ($249/mo)': 'Growth plan for scaling your presence',
+                        'Authority ($449/mo)': 'Authority plan for building your brand'
+                    };
+                    messages.push(`Great choice: <strong>${planNames[plan] || plan}</strong>`);
+                }
+
+                if (industry) {
+                    messages.push(`Working in <strong>${industry}</strong> — we'll tailor content for your niche.`);
+                }
+
+                if (motive) {
+                    messages.push(`Your goal: <strong>${motive.substring(0, 50)}${motive.length > 50 ? '...' : ''}</strong>`);
+                }
+
+                if (messages.length > 0) {
+                    dynamicResponse.innerHTML = '✨ ' + messages.join(' · ');
+                    dynamicResponse.classList.add('show');
+                } else {
+                    dynamicResponse.classList.remove('show');
+                }
+
+                // Save data to localStorage
+                saveData();
+            }
+
+            // Save form data to localStorage
+            function saveData() {
+                const data = {
+                    plan: planSelect.value,
+                    name: nameInput.value,
+                    industry: industryInput.value,
+                    motive: motiveInput.value
+                };
+                localStorage.setItem('contentai_form_data', JSON.stringify(data));
+            }
+
+            // Load saved data from localStorage
+            function loadSavedData() {
+                const saved = localStorage.getItem('contentai_form_data');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        if (data.plan) planSelect.value = data.plan;
+                        if (data.name) nameInput.value = data.name;
+                        if (data.industry) industryInput.value = data.industry;
+                        if (data.motive) motiveInput.value = data.motive;
+                        
+                        // Trigger dynamic response update
+                        updateDynamicResponse();
+                    } catch (e) {
+                        console.log('Could not load saved data');
+                    }
+                }
+            }
+
+            // Add event listeners for dynamic response
+            planSelect.addEventListener('change', updateDynamicResponse);
+            nameInput.addEventListener('input', updateDynamicResponse);
+            industryInput.addEventListener('input', updateDynamicResponse);
+            motiveInput.addEventListener('input', updateDynamicResponse);
+
+            // Form submission handler - build mailto subject and body
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const plan = planSelect.value || 'Not specified';
+                const name = nameInput.value || 'Not specified';
+                const industry = industryInput.value || 'Not specified';
+                const motive = motiveInput.value || 'Not specified';
+
+                const subject = encodeURIComponent(`New Inquiry - ${plan} - ${name}`);
+                const body = encodeURIComponent(
+                    `Hello ContentAI Studio,\n\n` +
+                    `I'm interested in the ${plan} plan.\n\n` +
+                    `Name: ${name}\n` +
+                    `Industry: ${industry}\n` +
+                    `Motive: ${motive}\n\n` +
+                    `Looking forward to working with you!`
+                );
+
+                // Build the Gmail URL with subject and body
+                const gmailUrl = `https://mail.google.com/mail/u/0/?view=cm&fs=1&tf=1&to=contentai.bd@gmail.com&subject=${subject}&body=${body}`;
+
+                // Open Gmail in new tab
+                window.open(gmailUrl, '_blank');
+            });
+
+            // Clear saved data on form reset
+            form.addEventListener('reset', function() {
+                localStorage.removeItem('contentai_form_data');
+                dynamicResponse.classList.remove('show');
+            });
+        });
+    </script>
 </body>
 </html>

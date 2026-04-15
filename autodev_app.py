@@ -6,7 +6,7 @@ and automatically commits them to GitHub with live deployment.
 
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
-from groq import Groq
+from mistralai.client import Mistral
 import json
 import os
 import threading
@@ -22,8 +22,8 @@ load_dotenv()
 # CONFIGURATION
 # ============================================================================
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-MODEL = "moonshotai/kimi-k2-instruct-0905"
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "")
+MODEL = "mistral-large-latest"
 REMOTE_URL = "https://github.com/iftekharirab11-stack/ai-agent.git"
 LIVE_URL = "https://iftekharirab11-stack.github.io/ai-agent/"
 OUTPUT_FILE = "index.html"
@@ -167,30 +167,28 @@ def generate_code(prompt, status_callback=None):
             full_prompt = prompt
 
         if status_callback:
-            status_callback("Connecting to Groq API...")
+            status_callback("Connecting to Mistral API...")
 
-        client = Groq(api_key=GROQ_API_KEY)
+        client = Mistral(api_key=MISTRAL_API_KEY)
 
         if status_callback:
-            status_callback("Sending request to Kimi K2...")
+            status_callback("Sending request to Mistral Large...")
 
-        completion = client.chat.completions.create(
+        chat_response = client.chat.complete(
             model=MODEL,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": full_prompt}
             ],
             temperature=1,
-            max_completion_tokens=16000,
-            top_p=1,
-            stream=False,
-            stop=None
+            max_tokens=16000,
+            top_p=1
         )
 
         if status_callback:
             status_callback("Processing AI response...")
 
-        code = completion.choices[0].message.content.strip()
+        code = chat_response.choices[0].message.content
 
         if code.startswith("```html"):
             code = code[7:]
