@@ -120,7 +120,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Contact
 
-Iftekhar Rabbani - [GitHub Profile](https://github.com/iftekharirab11-stack)
+Iftekhar  - [GitHub Profile](https://github.com/iftekharirab11-stack)
 
 Project Link: [https://github.com/iftekharirab11-stack/ai-agent](https://github.com/iftekharirab11-stack/ai-agent)
 
